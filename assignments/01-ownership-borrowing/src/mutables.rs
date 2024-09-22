@@ -1,16 +1,23 @@
 /// Increments a mutable i32 reference by 1. On overflow, wraps around.
-fn increments() {
-    todo!();
+fn increments(i: &mut i32) {
+    if *i == i32::MAX {
+        *i = i32::MIN;
+    } else {
+        *i += 1;
+    }
 }
 
 /// Given two mutable i32 references, swap their values
-fn swap() {
-    todo!();
+fn swap(i: &mut i32, j: &mut i32) {
+    let temp = *i;
+    *i = *j;
+    *j = temp;
 }
 
 /// Given a mutable string slice, strip all vowels and digits
-fn strip_vowels_and_digits() {
-    todo!();
+fn strip_vowels_and_digits(s: &mut String) -> String {
+    strip_vowels(s);
+    strip_digits(s.clone())
 }
 
 // DO NOT MODIFY BELOW THIS LINE

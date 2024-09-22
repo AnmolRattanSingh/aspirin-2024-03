@@ -2,7 +2,15 @@ use std::cmp::Ordering;
 
 #[allow(dead_code)]
 fn get_fibonacci(fibonacci_size: usize) -> Vec<u32> {
-    todo!()
+    let arr_fib: Vec<u32> = (0..fibonacci_size)
+        .scan((0, 1), |(prev, curr), _| {
+            let temp = *curr;
+            *curr = *prev + *curr;
+            *prev = temp;
+            Some(*prev)
+        })
+        .collect();
+    arr_fib
 }
 
 #[allow(dead_code)]
