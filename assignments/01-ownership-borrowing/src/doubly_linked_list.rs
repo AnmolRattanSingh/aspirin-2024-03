@@ -6,11 +6,6 @@ struct Node {
     next: Link,
     prev: Link,
 }
-struct Node {
-    val: i32,
-    next: Link,
-    prev: Link,
-}
 
 type Link = Option<Box<Node>>;
 
