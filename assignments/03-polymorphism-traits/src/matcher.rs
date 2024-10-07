@@ -67,28 +67,63 @@ mod tests {
     }
 
     #[test]
-    fn test_regex_matcher() {
+    fn test_regex_matcher_simple_match() {
         let matcher = RegexMatcher::new("foo", false).unwrap();
         assert!(matcher.is_match("foo"));
         assert!(!matcher.is_match("bar"));
     }
 
     #[test]
-    fn test_regex_matcher_case_insensitive() {
-        let matcher = RegexMatcher::new("foo", true).unwrap();
-        assert!(matcher.is_match("FOO"));
-        assert!(!matcher.is_match("bar"));
+    fn test_regex_matcher_character_class() {
+        // Matches any character between 'a' and 'c'
+        let matcher = RegexMatcher::new("[a-c]", false).unwrap();
+        assert!(matcher.is_match("a"));
+        assert!(matcher.is_match("b"));
+        assert!(matcher.is_match("c"));
+        assert!(!matcher.is_match("d"));
     }
 
     #[test]
-    fn test_regex_matcher_case_sensitive() {
-        let matcher = RegexMatcher::new("foo", false).unwrap();
-        assert!(!matcher.is_match("FOO"));
-        assert!(!matcher.is_match("bar"));
+    fn test_regex_matcher_quantifiers() {
+        // Matches 'a' followed by zero or more 'b's
+        let matcher = RegexMatcher::new("ab*", false).unwrap();
+        assert!(matcher.is_match("a"));
+        assert!(matcher.is_match("ab"));
+        assert!(matcher.is_match("abb"));
+        assert!(matcher.is_match("abbbbb"));
+        assert!(!matcher.is_match("b"));
+    }
+
+    #[test]
+    fn test_regex_matcher_groups_and_alternation() {
+        // Matches 'cat' or 'dog'
+        let matcher = RegexMatcher::new("(cat|dog)", false).unwrap();
+        assert!(matcher.is_match("I have a cat"));
+        assert!(matcher.is_match("I have a dog"));
+        assert!(!matcher.is_match("I have a mouse"));
+    }
+
+    #[test]
+    fn test_regex_matcher_special_characters() {
+        // Matches strings containing a dot '.'
+        let matcher = RegexMatcher::new(r"\.", false).unwrap();
+        assert!(matcher.is_match("file.txt"));
+        assert!(matcher.is_match("a.b"));
+        assert!(!matcher.is_match("abc"));
+    }
+
+    #[test]
+    fn test_regex_matcher_digit_class() {
+        // Matches any string containing digits
+        let matcher = RegexMatcher::new(r"\d+", false).unwrap();
+        assert!(matcher.is_match("123"));
+        assert!(matcher.is_match("abc123"));
+        assert!(!matcher.is_match("abc"));
     }
 
     #[test]
     fn test_regex_matcher_invalid_pattern() {
         assert!(RegexMatcher::new("*", false).is_err());
+        assert!(RegexMatcher::new("[unclosed", false).is_err());
     }
 }

@@ -62,30 +62,55 @@ impl Output for OutputMode {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use colored::Color;
 
     #[test]
     fn test_plain_output() {
-        let output = OutputMode::new_plain();
-        let mut writer = Vec::new();
-        let line = "hello world";
-        let needle = "hello";
-        output.write_line(&mut writer, line, needle).unwrap();
-        let output = String::from_utf8(writer).unwrap();
-        assert_eq!(output, "hello world\n");
+        let output = PlainOutput::new();
+        let mut buffer = Vec::new();
+        let line = "This is a test line.";
+        output.write_line(&mut buffer, line, "test").unwrap();
+        let result = String::from_utf8(buffer).unwrap();
+        assert_eq!(result, "This is a test line.\n");
     }
 
     #[test]
     fn test_colored_output() {
-        let output = OutputMode::new_colored(Color::Red);
-        let mut writer = Vec::new();
-        let line = "hello world";
-        let needle = "hello";
-        output.write_line(&mut writer, line, needle).unwrap();
-        let output = String::from_utf8(writer).unwrap();
-        assert_eq!(output, "\u{1b}[31mhello\u{1b}[0m world\n");
+        let output = ColoredOutput::new(Color::Red);
+        let mut buffer = Vec::new();
+        let line = "This is a test line.";
+        let needle = "test";
+        output.write_line(&mut buffer, line, needle).unwrap();
+        let result = String::from_utf8(buffer).unwrap();
+        let expected = format!("This is a {} line.\n", needle.color(Color::Red).to_string());
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_output_mode_plain() {
+        let output_mode = OutputMode::new_plain();
+        let mut buffer = Vec::new();
+        let line = "This is a test line.";
+        output_mode.write_line(&mut buffer, line, "test").unwrap();
+        let result = String::from_utf8(buffer).unwrap();
+        assert_eq!(result, "This is a test line.\n");
+    }
+
+    #[test]
+    fn test_output_mode_colored() {
+        let output_mode = OutputMode::new_colored(Color::Green);
+        let mut buffer = Vec::new();
+        let line = "This is a test line.";
+        let needle = "test";
+        output_mode.write_line(&mut buffer, line, needle).unwrap();
+        let result = String::from_utf8(buffer).unwrap();
+        let expected = format!(
+            "This is a {} line.\n",
+            needle.color(Color::Green).to_string()
+        );
+        assert_eq!(result, expected);
     }
 }
