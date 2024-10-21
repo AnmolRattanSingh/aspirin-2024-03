@@ -18,9 +18,6 @@ pub enum FilterError {
 
     #[error("Invalid type encountered")]
     InvalidType,
-
-    #[error("Deletion target not found or invalid")]
-    DeletionError,
 }
 
 // Define the FilterFn enum
@@ -39,17 +36,11 @@ pub enum FilterFn {
 pub struct Filter {}
 
 impl Filter {
-    // Create a new filter instance
     pub fn new() -> Filter {
         Filter {}
     }
 
-    // Identity filter: just returns the input as is
-    pub fn identity_filter(&self, input: Value) -> Result<Value, FilterError> {
-        Ok(input)
-    }
-
-    // Key filter: accessing a key in a JSON object
+    // accessing a key in a JSON object
     pub fn key_filter(&self, input: Value, key: &str) -> Result<Value, FilterError> {
         match input {
             Value::Object(map) => match map.get(key) {
@@ -60,18 +51,18 @@ impl Filter {
         }
     }
 
-    // Array index: accessing an index in a JSON array
+    // accessing an index in a JSON array
     pub fn array_index(&self, input: Value, index: usize) -> Result<Value, FilterError> {
         match input {
             Value::Array(arr) => arr
                 .get(index)
                 .cloned()
-                .ok_or_else(|| FilterError::IndexOutOfBounds(index)),
+                .ok_or(FilterError::IndexOutOfBounds(index)),
             _ => Err(FilterError::ExpectedArray),
         }
     }
 
-    // Array slice: accessing a slice of a JSON array
+    // accessing a slice of a JSON array
     pub fn array_slice(
         &self,
         input: Value,
@@ -93,7 +84,6 @@ impl Filter {
         }
     }
 
-    // Implement the 'add' function
     pub fn add(&self, input: Value) -> Result<Value, FilterError> {
         match input {
             Value::Array(arr) => {
@@ -138,7 +128,6 @@ impl Filter {
         }
     }
 
-    // Implement the 'length' function
     pub fn length(&self, input: Value) -> Result<Value, FilterError> {
         match input {
             Value::Array(arr) => Ok(Value::Number(serde_json::Number::from(arr.len()))),
@@ -148,7 +137,6 @@ impl Filter {
         }
     }
 
-    // Implement the 'del' function
     pub fn del(&self, input: Value, target: &FilterFn) -> Result<Value, FilterError> {
         match target {
             FilterFn::KeyFilter(key) => {
@@ -176,7 +164,6 @@ impl Filter {
     }
 }
 
-// Implement the apply method for FilterFn
 impl FilterFn {
     pub fn apply(&self, filter: &Filter, values: Vec<Value>) -> Result<Vec<Value>, FilterError> {
         let mut results = Vec::new();
@@ -236,20 +223,10 @@ impl FilterFn {
     }
 }
 
-// tests/filter_tests.rs
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use serde_json::json;
-
-    #[test]
-    fn test_identity_filter() {
-        let filter = Filter::new();
-        let input = json!({"key": "value"});
-        let result = filter.identity_filter(input.clone()).unwrap();
-        assert_eq!(result, input);
-    }
 
     #[test]
     fn test_key_filter() {

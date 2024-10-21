@@ -1,6 +1,6 @@
+use crate::filter::FilterFn;
 use regex::Regex;
 use thiserror::Error;
-use crate::filter::{Filter, FilterError, FilterFn};
 
 #[derive(Error, Debug)]
 pub enum ParseError {
@@ -8,104 +8,85 @@ pub enum ParseError {
     InvalidString,
 }
 
-pub struct Parse {
-    filter: Filter,
-}
+pub struct Parse {}
 
 impl Parse {
     pub fn new() -> Parse {
-        Parse {
-            filter: Filter::new(),
-        }
+        Parse {}
     }
 
     // Parse the input string into a sequence of filters
-    pub fn parse(
-        &self,
-        input: &String,
-    ) -> Result<Vec<FilterFn>, ParseError> {
+    pub fn parse(&self, input: &str) -> Result<Vec<FilterFn>, ParseError> {
         let mut filters: Vec<FilterFn> = Vec::new();
 
-        // Trim whitespace for better parsing
         let input = input.trim();
 
         // Handle pipes
         let pipe_regex = Regex::new(r"\|").unwrap();
-        if pipe_regex.is_match(&input) {
+        if pipe_regex.is_match(input) {
             let filter_strings: Vec<&str> = input.split('|').collect();
             let mut pipe_filters: Vec<FilterFn> = Vec::new();
             for filter_str in filter_strings {
-                let parsed_filters = self.parse(&filter_str.trim().to_string())?;
+                let parsed_filters = self.parse(filter_str.trim())?;
                 pipe_filters.extend(parsed_filters);
             }
-            println!("Parsed pipe with filters");
             return Ok(pipe_filters);
         }
 
         // Identity filter: Just a dot "."
         if input == "." {
-            println!("Parsed identity filter");
             filters.push(FilterFn::Identity);
             return Ok(filters);
         }
 
         // Object-Identifier Index: .key
         let object_index_regex = Regex::new(r"^\.\w+$").unwrap();
-        if object_index_regex.is_match(&input) {
+        if object_index_regex.is_match(input) {
             let key = input.trim_start_matches('.').to_string();
-            println!("Parsed object identifier: {}", key);
             filters.push(FilterFn::KeyFilter(key));
             return Ok(filters);
         }
 
         // Array Index: .[index]
         let array_index_regex = Regex::new(r"^\.\[(\d+)\]$").unwrap();
-        if let Some(caps) = array_index_regex.captures(&input) {
+        if let Some(caps) = array_index_regex.captures(input) {
             let index: usize = caps[1].parse().unwrap();
-            println!("Parsed array index: {}", index);
             filters.push(FilterFn::ArrayIndex(index));
             return Ok(filters);
         }
 
         // Array Slice: .[start:end]
         let array_slice_regex = Regex::new(r"^\.\[(\d*):(\d*)\]$").unwrap();
-        if let Some(caps) = array_slice_regex.captures(&input) {
+        if let Some(caps) = array_slice_regex.captures(input) {
             let start = caps
                 .get(1)
                 .map_or(0, |m| m.as_str().parse::<usize>().unwrap_or(0));
-            let end = caps
-                .get(2)
-                .and_then(|m| m.as_str().parse::<usize>().ok());
-            println!("Parsed array slice: start={}, end={:?}", start, end);
+            let end = caps.get(2).and_then(|m| m.as_str().parse::<usize>().ok());
             filters.push(FilterFn::ArraySlice { start, end });
             return Ok(filters);
         }
 
         // Array Iterator: .[]
         if input == ".[]" {
-            println!("Parsed array iterator");
             filters.push(FilterFn::ArrayIterator);
             return Ok(filters);
         }
 
         // Built-in functions
         if input == "add" {
-            println!("Parsed add function");
             filters.push(FilterFn::Add);
             return Ok(filters);
         }
 
         if input == "length" {
-            println!("Parsed length function");
             filters.push(FilterFn::Length);
             return Ok(filters);
         }
 
         // Del function: del(...)
         let del_regex = Regex::new(r"^del\((.+)\)$").unwrap();
-        if let Some(caps) = del_regex.captures(&input) {
+        if let Some(caps) = del_regex.captures(input) {
             let arg = caps.get(1).unwrap().as_str().to_string();
-            println!("Parsed del function with argument: {}", arg);
             let arg_filters = self.parse(&arg)?;
             if arg_filters.len() != 1 {
                 return Err(ParseError::InvalidString);
@@ -118,14 +99,10 @@ impl Parse {
     }
 }
 
-
-// tests/parse_tests.rs
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::filter::FilterFn;
-    use serde_json::json;
 
     #[test]
     fn test_parse_identity() {

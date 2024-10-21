@@ -10,7 +10,7 @@ mod parse;
 
 use filter::Filter;
 use input::InputReader;
-use output::{normal_output, pretty_output};
+use output::{write_output, OutputOptions};
 use parse::Parse;
 
 #[derive(Parser, Debug)]
@@ -37,7 +37,6 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-    println!("{:?}", args);
 
     // Create a boxed input reader depending on whether a file is provided
     let reader: Box<dyn InputReader> = if let Some(file) = &args.file {
@@ -62,17 +61,23 @@ fn main() -> Result<()> {
         current_values = filter_fn.apply(&filter_instance, current_values)?;
     }
 
+    // Set up output options
+    let output_options = OutputOptions {
+        compact: args.compact_output,
+        color_output: args.color_output,
+        monochrome_output: args.monochrome_output,
+        sort_keys: args.sort_keys,
+        indent: args.indent.unwrap_or(2) as usize,
+    };
+
+    println!("{}", args.sort_keys);
+
     // Output the results
-    let mut stdout_writer = io::stdout(); // Get a mutable reference to stdout for writing output
+    let mut stdout_writer = io::stdout();
 
     for value in current_values {
-        if args.compact_output {
-            normal_output(&mut stdout_writer, &value)?;
-        } else {
-            pretty_output(&mut stdout_writer, &value)?;
-        }
-        // Add a newline between outputs if not in compact mode
-        if !args.compact_output {
+        write_output(&mut stdout_writer, &value, &output_options)?;
+        if !output_options.compact {
             writeln!(stdout_writer)?;
         }
     }
