@@ -6,18 +6,87 @@ pub enum MatrixError {
 }
 
 fn dot_product_prescriptive(vec1: &Vec<f64>, vec2: &Vec<f64>) -> Result<f64, MatrixError> {
-    todo!()
+    let (m, n) = (vec1.len(), vec2.len());
+    if m == 0 || n == 0 {
+        Err(MatrixError::EmptyVector)
+    } else if m != n {
+        Err(MatrixError::DimensionMismatch)
+    } else {
+        let mut result = 0.0;
+        for i in 0..m {
+            result += vec1[i] * vec2[i];
+        }
+        Ok(result)
+    }
 }
 
 fn dot_product_functional(vec1: &Vec<f64>, vec2: &Vec<f64>) -> Result<f64, MatrixError> {
-    todo!()
+    if vec1.is_empty() || vec2.is_empty() {
+        return Err(MatrixError::EmptyVector);
+    }
+    if vec1.len() != vec2.len() {
+        return Err(MatrixError::DimensionMismatch);
+    }
+
+    let dot_product = vec1.iter().zip(vec2.iter()).map(|(a, b)| a * b).sum();
+
+    Ok(dot_product)
 }
 
 fn multiply_matrices(
     vec1: &Vec<Vec<f64>>,
     vec2: &Vec<Vec<f64>>,
 ) -> Result<Vec<Vec<f64>>, MatrixError> {
-    todo!()
+    // Check if either matrix is empty
+    if vec1.is_empty() || vec2.is_empty() {
+        return Err(MatrixError::EmptyVector);
+    }
+
+    // Check that vec1 is a valid matrix (all rows have the same length)
+    let cols_vec1 = vec1[0].len();
+    if cols_vec1 == 0 {
+        return Err(MatrixError::InvalidShape);
+    }
+    for row in vec1 {
+        if row.len() != cols_vec1 {
+            return Err(MatrixError::InvalidShape);
+        }
+    }
+
+    // Check that vec2 is a valid matrix (all rows have the same length)
+    let cols_vec2 = vec2[0].len();
+    if cols_vec2 == 0 {
+        return Err(MatrixError::InvalidShape);
+    }
+    for row in vec2 {
+        if row.len() != cols_vec2 {
+            return Err(MatrixError::InvalidShape);
+        }
+    }
+
+    // Check if matrices can be multiplied (number of columns in vec1 == number of rows in vec2)
+    if cols_vec1 != vec2.len() {
+        return Err(MatrixError::DimensionMismatch);
+    }
+
+    let rows_vec1 = vec1.len();
+    let cols_vec2 = vec2[0].len();
+
+    // Initialize the result matrix with zeros
+    let mut result = vec![vec![0.0; cols_vec2]; rows_vec1];
+
+    // Perform matrix multiplication
+    for i in 0..rows_vec1 {
+        for j in 0..cols_vec2 {
+            let mut sum = 0.0;
+            for k in 0..cols_vec1 {
+                sum += vec1[i][k] * vec2[k][j];
+            }
+            result[i][j] = sum;
+        }
+    }
+
+    Ok(result)
 }
 
 #[cfg(test)]
