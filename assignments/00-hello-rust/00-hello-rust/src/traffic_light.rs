@@ -11,13 +11,49 @@ struct TrafficLightState {
     last_transition_time_ms: u32,
 }
 
-fn get_next_color(state: TrafficLightState) -> TrafficLightColor {}
+fn get_next_color(state: TrafficLightState) -> TrafficLightColor {
+    match state.current_color {
+        TrafficLightColor::Red => TrafficLightColor::Green,
+        TrafficLightColor::Yellow => TrafficLightColor::Red,
+        TrafficLightColor::Green => TrafficLightColor::Yellow,
+    }
+}
 
 fn get_next_state(
     state: TrafficLightState,
     current_time_ms: u32,
     pedestrian_walk_request: bool,
 ) -> TrafficLightColor {
+    let time_since_last_transition = current_time_ms - state.last_transition_time_ms;
+    const RED_REQUIRED_TIME: u32 = 25000;
+    const GREEN_PEDESTRIAN_REQUIRED_TIME: u32 = 30000;
+    const GREEN_NO_PEDESTRIAN_REQUIRED_TIME: u32 = 20000;
+    const YELLOW_REQUIRED_TIME: u32 = 5000;
+
+    // Handle Green Light Transitions
+    if state.current_color == TrafficLightColor::Green {
+        let green_light_duration = if pedestrian_walk_request {
+            GREEN_NO_PEDESTRIAN_REQUIRED_TIME
+        } else {
+            GREEN_PEDESTRIAN_REQUIRED_TIME
+        };
+        if time_since_last_transition > green_light_duration {
+            return get_next_color(state);
+        }
+    }
+
+    // Handle Red Light Transitions
+    if state.current_color == TrafficLightColor::Red && time_since_last_transition > RED_REQUIRED_TIME {
+        return get_next_color(state);
+    }
+
+    // Handle Yellow Light Transitions
+    if state.current_color == TrafficLightColor::Yellow && time_since_last_transition > YELLOW_REQUIRED_TIME {
+        return get_next_color(state);
+    }
+
+    // No transition, return the current color
+    state.current_color
 }
 
 // Do not modify below here
