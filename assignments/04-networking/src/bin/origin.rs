@@ -231,3 +231,36 @@ fn handle_delete(db: &AspirinEatsDb, request: &HttpRequest, stream: &mut std::ne
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_order_id_valid() {
+        let path = "/orders/42";
+        let id = extract_order_id(path);
+        assert_eq!(id, Some(42));
+    }
+
+    #[test]
+    fn test_extract_order_id_invalid() {
+        let path = "/orders/abc";
+        let id = extract_order_id(path);
+        assert_eq!(id, None);
+    }
+
+    #[test]
+    fn test_extract_order_id_no_id() {
+        let path = "/orders/";
+        let id = extract_order_id(path);
+        assert_eq!(id, None);
+    }
+
+    #[test]
+    fn test_extract_order_id_wrong_path() {
+        let path = "/order/42";
+        let id = extract_order_id(path);
+        assert_eq!(id, None);
+    }
+}
