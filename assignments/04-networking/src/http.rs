@@ -1,6 +1,6 @@
-use std::{fmt::Display, str::FromStr};
-
 use crate::error::AspirinEatsError;
+use regex::Regex;
+use std::{fmt::Display, str::FromStr};
 
 /// Simple wrapper for an HTTP Request
 #[derive(Debug)]
@@ -18,9 +18,27 @@ pub struct HttpRequest {
 impl FromStr for HttpRequest {
     type Err = AspirinEatsError;
 
-    // Parse a string into an HTTP Request
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        // Regular expression to capture the HTTP method, path, and HTTP version
+        let re = Regex::new(r"^(GET|POST|PUT|DELETE|PATCH) ([^ ]+) HTTP/1\.[01]")
+            .map_err(|e| e.to_string())?;
+
+        // Separate headers and body
+        let parts: Vec<&str> = s.split("\r\n\r\n").collect();
+        let (header, body) = match parts.len() {
+            2 => (parts[0], Some(parts[1].to_string())),
+            1 => (parts[0], None),
+            _ => return Err("Invalid HTTP request format".to_string()),
+        };
+
+        // Capture the method and path from the header
+        let caps = re
+            .captures(header)
+            .ok_or("Failed to parse HTTP method and path")?;
+        let method = caps.get(1).map(|m| m.as_str().to_string());
+        let path = caps.get(2).map(|p| p.as_str().to_string());
+
+        Ok(HttpRequest { method, path, body })
     }
 }
 
@@ -43,14 +61,33 @@ impl HttpResponse {
 impl Display for HttpResponse {
     /// Convert an HttpResponse struct to a valid HTTP Response
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        write!(
+            f,
+            "HTTP/1.1 {} {}\r\n\r\n{}",
+            self.status_code, self.status_text, self.body
+        )
     }
 }
 
 impl From<AspirinEatsError> for HttpResponse {
     /// Given an error type, convert it to an appropriate HTTP Response
     fn from(value: AspirinEatsError) -> Self {
-        todo!()
+        let (status_code, status_text, body) = match value {
+            AspirinEatsError::ParseError(_) => (400, "Bad Request", "Invalid Request"),
+            AspirinEatsError::Database(_) => {
+                (500, "Internal Server Error", "Internal Server Error")
+            }
+            AspirinEatsError::Io(_) => (500, "Internal Server Error", "Internal Server Error"),
+            AspirinEatsError::InvalidRequest => (400, "Bad Request", "Invalid Request"),
+            AspirinEatsError::NotFound => (404, "Not Found", "Resource not found"),
+            AspirinEatsError::MethodNotAllowed => (405, "Method Not Allowed", "Method not allowed"),
+        };
+
+        HttpResponse {
+            status_code,
+            status_text: status_text.to_string(),
+            body: body.to_string(),
+        }
     }
 }
 
