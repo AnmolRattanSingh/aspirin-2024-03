@@ -8,4 +8,5 @@ mod university;
 
 fn main() {
     println!("Hello world!");
+    calculator::run();
 }
