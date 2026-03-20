@@ -1,23 +1,133 @@
-use std::collections::HashMap;
+fn longest_equal_sequence_prescriptive<T>(sequence: &[T]) -> i32
+where
+    T: PartialEq<T>,
+{
+    if sequence.is_empty() {
+        return 0;
+    }
 
-fn longest_equal_sequence_prescriptive(sequence) -> i32 {
-    todo!()
+    let mut max_length = 1;
+    let mut current_length = 1;
+
+    for i in 1..sequence.len() {
+        if sequence[i] == sequence[i - 1] {
+            // If the current element is equal to previous, increment current_length
+            current_length += 1;
+        } else {
+            // If not equal, check if the current sequence is the longest so far
+            if current_length > max_length {
+                max_length = current_length;
+            }
+            // Reset current sequence length
+            current_length = 1;
+        }
+    }
+
+    // After the loop, check one last time in case the longest sequence is at the end
+    if current_length > max_length {
+        max_length = current_length;
+    }
+
+    max_length
 }
 
-fn longest_equal_sequence_functional(sequence) -> i32 {
-    todo!()
+fn longest_equal_sequence_functional<T>(sequence: &[T]) -> i32
+where
+    T: PartialEq,
+{
+    if sequence.is_empty() {
+        return 0;
+    }
+
+    sequence
+        .iter()
+        .skip(1) // skip first since we're comparing with previous
+        .fold((1, 1, &sequence[0]), |(max_len, curr_len, prev), curr| {
+            if curr == prev {
+                let curr_len = curr_len + 1;
+                let max_len = if curr_len > max_len {
+                    curr_len
+                } else {
+                    max_len
+                };
+                (max_len, curr_len, curr)
+            } else {
+                // New sequence; Keep max_len and reset curr_len
+                (max_len, 1, curr)
+            }
+        })
+        .0 // extract max_len
 }
 
 fn is_valid_paranthesis(paranthesis: &str) -> bool {
-    todo!()
+    let mut stack = Vec::new();
+
+    for c in paranthesis.chars() {
+        match c {
+            '(' | '[' | '{' => stack.push(c),
+            ')' => {
+                if stack.pop() != Some('(') {
+                    return false;
+                }
+            }
+            ']' => {
+                if stack.pop() != Some('[') {
+                    return false;
+                }
+            }
+            '}' => {
+                if stack.pop() != Some('{') {
+                    return false;
+                }
+            }
+            _ => return false,
+        }
+    }
+
+    stack.is_empty()
 }
 
-fn longest_common_substring<(first_str: &str, second_str: &str) -> &str {
-    todo!()
+fn longest_common_substring<'a>(first_str: &'a str, second_str: &'a str) -> &'a str {
+    let mut max_len = 0;
+    let mut start_idx = 0;
+
+    let first_len = first_str.len();
+
+    for i in 0..first_len {
+        for j in i + 1..=first_len {
+            let substr = &first_str[i..j];
+            if second_str.contains(substr) {
+                let len = j - i;
+                if len > max_len {
+                    max_len = len;
+                    start_idx = i;
+                }
+            }
+        }
+    }
+
+    &first_str[start_idx..start_idx + max_len]
 }
 
-fn longest_common_substring_multiple(strings: &[&str]) -> &str {
-    todo!()
+fn longest_common_substring_multiple<'a>(strings: &'a [&'a str]) -> &'a str {
+    if strings.is_empty() {
+        return "";
+    }
+
+    let mut longest = "";
+
+    let first_str = strings[0];
+
+    for start in 0..first_str.len() {
+        for end in start + 1..=first_str.len() {
+            let substr = &first_str[start..end];
+            if strings.iter().all(|s| s.contains(substr)) && substr.len() > longest.len() {
+                longest = substr;
+            }
+        }
+    }
+
+    longest
 }
 
 #[cfg(test)]
